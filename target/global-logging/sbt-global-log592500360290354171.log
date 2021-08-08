@@ -1,0 +1,13 @@
+[debug] > Exec(test, None, None)
+[debug] Evaluating tasks: Test / test
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[info] compiling 2 Scala sources to C:\dev\coursera\codecs\target\scala-3.0.0\classes ...
+[info] done compiling
+[info] compiling 1 Scala source to C:\dev\coursera\codecs\target\scala-3.0.0\test-classes ...
+[info] done compiling
+[error] Failed: Total 14, Failed 12, Errors 0, Passed 2
+[error] Failed tests:
+[error] 	codecs.CodecsSuite
+[error] (Test / test) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 5 s, completed 8 Aug 2021, 8:05:26 pm
+[debug] > Exec(idea-shell, None, None)

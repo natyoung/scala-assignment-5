@@ -1,0 +1,15 @@
+[debug] Created transactional ClassFileManager with tempDir = C:\dev\coursera\codecs\target\scala-3.0.0\test-classes.bak
+[debug] About to delete class files:
+[debug] We backup class files:
+[debug] Registering generated classes:
+[debug] 	TestDecoders.class
+[debug] 	TestEncoders.class
+[debug] 	DecoderFallbackInstance.class
+[debug] 	EncoderFallbackInstance.class
+[debug] 	CodecsSuite.class
+[debug] 	TestDecoders.tasty
+[debug] 	TestEncoders.tasty
+[debug] 	DecoderFallbackInstance.tasty
+[debug] 	EncoderFallbackInstance.tasty
+[debug] 	CodecsSuite.tasty
+[debug] Removing the temporary directory used for backing up class files: C:\dev\coursera\codecs\target\scala-3.0.0\test-classes.bak
