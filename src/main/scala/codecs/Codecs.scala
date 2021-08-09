@@ -82,10 +82,13 @@ trait EncoderInstances:
 
   /** An encoder for `String` values */
   given stringEncoder: Encoder[String] =
-  Encoder.fromFunction(s => Json.Str(s)) // TODO Implement the `Encoder[String]` given instance
+  // TODO Implement the `Encoder[String]` given instance
+    Encoder.fromFunction(s => Json.Str(s.toString))
 
   /** An encoder for `Boolean` values */
   // TODO Define a given instance of type `Encoder[Boolean]`
+  given booleanEncoder: Encoder[Boolean] =
+    Encoder.fromFunction(b => Json.Bool(b))
 
   /**
     * Encodes a list of values of type `A` into a JSON array containing
@@ -188,19 +191,37 @@ trait DecoderInstances:
     Decoder.fromPartialFunction { case Json.Null => () }
 
   /** A decoder for `Int` values. Hint: use the `isValidInt` method of `BigDecimal`. */
-  // TODO Define a given instance of type `Decoder[Int]`
+  given intDecoder: Decoder[Int] =
+    Decoder.fromFunction { json => {
+        json match
+          case Json.Num(json) => if BigDecimal(json.toString).isValidInt then Some(json.toInt) else None
+          case _ => None
+      }
+    }
 
   /** A decoder for `String` values */
-  // TODO Define a given instance of type `Decoder[String]`
+  given stringDecoder: Decoder[String] =
+    Decoder.fromFunction { json => {
+      json match
+        case Json.Str(json) => Some(json.toString)
+        case _ => None
+    }
+  }
 
   /** A decoder for `Boolean` values */
-  // TODO Define a given instance of type `Decoder[Boolean]`
+  given booleanDecoder: Decoder[Boolean] =
+    Decoder.fromFunction { json => {
+      json match
+        case Json.Bool(json) => Some(json.booleanValue())
+        case _ => None
+    }
+  }
 
   /**
     * A decoder for JSON arrays. It decodes each item of the array
     * using the given `decoder`. The resulting decoder succeeds only
     * if all the JSON array items are successfully decoded.
-    * 
+    *
     * Hint: you should first check that the JSON value to decode is a JSON
     * array, and if it is the case you should iterate over its JSON elements
     * (e.g., with `foldLeft`) to decode them.
@@ -213,8 +234,22 @@ trait DecoderInstances:
     * should return `None`.
     */
   given listDecoder[A](using decoder: Decoder[A]): Decoder[List[A]] =
+    def decodeElement(jsonArr: List[Json]): Option[List[A]] = {
+      val listOption = jsonArr.foldLeft(List[A]())((acc, element) => {
+        val data: Option[A] = decoder.decode(element)
+        data match
+          case Some(a) => acc ++ List[A](data.get)
+          case None => return Option.empty
+        }
+      )
+      Option(listOption)
+    }
     Decoder.fromFunction {
-      ???
+      json => {
+        json match
+          case Json.Arr(json) => decodeElement(json)
+          case _ => None
+      }
     }
 
   /**
@@ -222,7 +257,12 @@ trait DecoderInstances:
     * the supplied `name` using the given `decoder`.
     */
   def field[A](name: String)(using decoder: Decoder[A]): Decoder[A] =
-    ???
+    Decoder.fromFunction(json => {
+      json match {
+        case Json.Obj(json) => decoder.decode(json.get(name).get)
+        case _ => Option.empty
+      }
+    })
 
 end DecoderInstances
 
@@ -240,7 +280,9 @@ trait PersonCodecs:
 
   /** The corresponding decoder for `Person` */
   given Decoder[Person] =
-    ???
+    val name = Decoder.field[String]("name")
+    val age = Decoder.field[Int]("age")
+    name.zip(age).transform[Person]((a, b) => Person(a, b))
 
 end PersonCodecs
 
@@ -254,15 +296,19 @@ trait ContactsCodecs:
   // The JSON representation of a value of type `Contacts` should be
   // a JSON object with a single field named “people” containing an
   // array of values of type `Person` (reuse the `Person` codecs)
-  given Encoder[Contacts] = ???
-  // ... then implement the decoder
+  given Encoder[Contacts] =
+    ObjectEncoder.field[List[Person]]("people").transform[Contacts](c => c.people)
+
+  given Decoder[Contacts] =
+    val people = Decoder.field[List[Person]]("people")
+    people.transform[Contacts](p => Contacts(p))
 
 end ContactsCodecs
 
 // In case you want to try your code, here is a simple `Main`
 // that can be used as a starting point. Otherwise, you can use
 // the REPL (use the `console` sbt task).
-import Util.*
+import Util.{parseJson, *}
 
 @main def run(): Unit =
   println(renderJson(42))
@@ -272,8 +318,8 @@ import Util.*
   val maybeJsonObj    = parseJson(""" { "name": "Alice", "age": 42 } """)
   val maybeJsonObj2   = parseJson(""" { "name": "Alice", "age": "42" } """)
   // Uncomment the following lines as you progress in the assignment
-  // println(maybeJsonString.flatMap(_.decodeAs[Int]))
-  // println(maybeJsonString.flatMap(_.decodeAs[String]))
-  // println(maybeJsonObj.flatMap(_.decodeAs[Person]))
-  // println(maybeJsonObj2.flatMap(_.decodeAs[Person]))
-  // println(renderJson(Person("Bob", 66)))
+   println(maybeJsonString.flatMap(_.decodeAs[Int]))
+   println(maybeJsonString.flatMap(_.decodeAs[String]))
+   println(maybeJsonObj.flatMap(_.decodeAs[Person]))
+   println(maybeJsonObj2.flatMap(_.decodeAs[Person]))
+   println(renderJson(Person("Bob", 66)))
